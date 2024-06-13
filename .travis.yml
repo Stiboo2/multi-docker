@@ -1,0 +1,24 @@
+sudo: required
+language: generic
+
+services:
+  - docker
+
+before_install:
+  - docker build -t thaboradebe/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true thaboradebe/react-test npm test
+
+after_success:
+  - docker build -t thaboradebe/multi-client ./client
+  - docker build -t thaboradebe/multi-nginx ./nginx
+  - docker build -t thaboradebe/multi-server ./server
+  - docker build -t thaboradebe/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push thaboradebe/multi-client
+  - docker push thaboradebe/multi-nginx
+  - docker push thaboradebe/multi-server
+  - docker push thaboradebe/multi-worker
